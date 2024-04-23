@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Interface</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>        
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <aside id="sidebar">
+        <!-- Sidebar content remains the same -->
+    </aside>
+    <section id="main-content">
+        <header id="main-header">
+            <!-- Header content remains the same -->
+            <h1>Ollama Chat</h1>
+        </header>
+        <div id="chatbox">
+            <!-- Chat messages will be dynamically inserted here -->
+        </div>
+        <footer id="chat-input">
+            <input type="text" id="userInput" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+            <input type="file" id="fileInput" style="display: none;">
+            <button onclick="$('#fileInput').click()">Upload</button>
+        </footer>
+    </section>
+
+    <script>
+        function appendMessage(who, text) {
+            // Convert Markdown to HTML if the message is from the bot
+            if (who === 'bot') {
+                text = marked.parse(text);
+            }
+
+            var avatar = who === 'user' ? 'U' : 'C';
+            var messageClass = who === 'user' ? 'user-message' : 'bot-message';
+            $('#chatbox').append(`
+                <div class="message ${messageClass}">
+                    <span class="avatar">${avatar}</span>
+                    <div class="text">${text}</div>
+                </div>
+            `);
+            $('#chatbox').scrollTop($('#chatbox')[0].scrollHeight); // Scroll to the bottom
+        }
+
+    
+        function sendMessage() {
+            var text = $('#userInput').val();
+            $('#userInput').val(''); // Clear the input after sending
+            if (text.trim() !== '') {
+                appendMessage('user', text);
+                $.post('/ask', {text: text}, function(data) {
+                    appendMessage('bot', data.response);
+                });
+            }
+        }
+    
+        function sendFile() {
+            var file = $('#fileInput').prop('files')[0];
+            var formData = new FormData();
+            formData.append('file', file);
+    
+            $.ajax({
+                url: '/upload',
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function(data) {
+                    appendMessage('user', 'Uploaded a file');
+                    appendMessage('bot', data.response);
+                }
+            });
+        }
+    
+        // Trigger send message on enter
+        $('#userInput').on('keypress',function(e) {
+            if(e.which == 13) {
+                sendMessage();
+            }
+        });
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,120 @@
+/* Add your own colors, sizes, etc. to match the screenshot */
+body {
+    display: flex;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+#sidebar {
+    width: 250px;
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+}
+
+#main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#main-header {
+    background-color: #555;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+}
+
+#chatbox {
+    flex-grow: 1;
+    overflow-y: auto;
+    background-color: #f0f0f0;
+    padding: 20px;
+}
+
+#chat-input {
+    display: flex;
+    padding: 10px;
+    background-color: #ddd;
+}
+
+#chat-input input[type=text] {
+    flex-grow: 1;
+    padding: 5px;
+    margin-right: 5px;
+}
+
+#chat-input button {
+    padding: 5px 10px;
+}
+
+#chat-input input[type=file] {
+    margin-right: 5px;
+}
+
+.message {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.user-message .avatar {
+    background-color: gainsboro; /* Replace with the actual color */
+}
+
+.user-message .text {
+    background-color: #e7e7e8;
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 80%;
+}
+
+.bot-message .avatar {
+    background-color: green; /* Replace with the actual color */
+}
+
+.bot-message .text {
+    background-color: #e5e0e0; /* Slightly darker */
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 80%;
+}
+
+#new-chat {
+    display: block;
+    margin: 10px;
+    padding: 10px;
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#chat-sessions ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+#chat-sessions li {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+#chat-sessions li.active {
+    background-color: #f0f0f0;
+}
