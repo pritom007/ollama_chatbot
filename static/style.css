@@ -1,4 +1,4 @@
-/* Add your own colors, sizes, etc. to match the screenshot */
+/* Add your colors, sizes, etc., to match the design mockup */
 body {
     display: flex;
     height: 100vh;
@@ -8,9 +8,30 @@ body {
 
 #sidebar {
     width: 250px;
-    background-color: #333;
+    background-color: #333; /* Adjusted to a slightly darker shade */
     color: #fff;
     padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+#sidebar-header {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 20px; /* Space between header and chat sessions */
+}
+
+#sidebar-header img {
+    width: 30px; /* Icon size */
+    margin-right: 10px;
+}
+
+#sidebar-header h2 {
+    color: white;
+    font-size: 1.5em;
+    margin: 0; /* Remove default margins */
 }
 
 #main-content {
@@ -36,21 +57,31 @@ body {
 #chat-input {
     display: flex;
     padding: 10px;
-    background-color: #ddd;
+    background-color: #fff; /* Darker background for input area */
+    color: #000000;
+    align-items: center;
 }
 
-#chat-input input[type=text] {
+#chat-input textarea {
     flex-grow: 1;
-    padding: 5px;
-    margin-right: 5px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-right: 10px;
+    border-radius: 4px;
+    resize: none; /* Disable resizing */
 }
 
 #chat-input button {
-    padding: 5px 10px;
+    padding: 10px 15px;
+    background-color: #4CAF50; /* Accent color */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
-#chat-input input[type=file] {
-    margin-right: 5px;
+#chat-input button:hover {
+    background-color: #45a049; /* Slightly darker on hover */
 }
 
 .message {
@@ -71,7 +102,7 @@ body {
 }
 
 .user-message .avatar {
-    background-color: gainsboro; /* Replace with the actual color */
+    background-color: #E7E7E8;
 }
 
 .user-message .text {
@@ -82,39 +113,114 @@ body {
 }
 
 .bot-message .avatar {
-    background-color: green; /* Replace with the actual color */
+    background-color: #9CCC65;
 }
 
 .bot-message .text {
-    background-color: #e5e0e0; /* Slightly darker */
+    background-color: #e5e0e0;
     padding: 10px;
     border-radius: 10px;
     max-width: 80%;
 }
 
-#new-chat {
-    display: block;
-    margin: 10px;
+/* Sidebar Add Chat button styling */
+#add-chat {
+    width: calc(100% - 40px); /* Adjusted to be within the padding */
     padding: 10px;
-    background-color: #1a73e8;
+    background-color: #4CAF50;
     color: white;
     border: none;
     border-radius: 4px;
-    font-weight: bold;
     cursor: pointer;
+    text-align: center; /* Center the text */
 }
 
-#chat-sessions ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
+#add-chat:hover {
+    background-color: #45a049;
+}
+
+/* Chat sessions styling */
+#chat-sessions {
+    overflow-y: auto; /* Makes the list scrollable */
+    flex-grow: 1; /* Allows the list to fill the space */
 }
 
 #chat-sessions li {
     padding: 10px;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid #404040;
+    cursor: pointer;
 }
 
 #chat-sessions li.active {
-    background-color: #f0f0f0;
+    background-color: #4CAF50;
+    color: #fff;
 }
+
+@media (max-width: 768px) {
+    #sidebar {
+        width: 100px; /* Adjusted sidebar width on smaller screens */
+    }
+
+    #add-chat {
+        padding: 5px 10px; /* Adjusted button padding on smaller screens */
+        font-size: 14px; /* Smaller font size for button text */
+    }
+
+    #sidebar-header h2 {
+        font-size: 1em; /* Smaller font size for sidebar header on smaller screens */
+    }
+}
+
+
+/* Code block container */
+pre[class*="language-"] {
+    margin: 1em 0;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background-color: #f8f8f8;
+    position: relative;
+    padding-top: 40px; /* Space for the header */
+}
+
+/* Code block header */
+.code-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 10px 16px;
+    background-color: #333;
+    color: #fff;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Copy code button */
+.copy-code-button {
+    padding: 5px 10px;
+    background-color: #0A84FF; /* Adjust color to match your design */
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* When hovering over the copy button */
+.copy-code-button:hover {
+    background-color: #0077CC; /* Slightly darker on hover */
+}
+
+/* Syntax Highlighting */
+/* Adjust the colors based on the Prism.js theme you choose or custom colors */
+.token.operator, .token.entity, .token.url, .language-css .token.string, .style .token.string, .token.variable {
+    color: #9a6e3a;
+}
+
+.token.punctuation {
+    color: #999;
+}
+
+/* ... other Prism.js styles ... */
