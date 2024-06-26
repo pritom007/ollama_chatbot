@@ -1,0 +1,45 @@
+# Python
+*.pyc
+__pycache__/
+
+# Virtualenv
+venv/
+env/
+
+# Build and installation
+build/
+dist/
+*.egg-info
+*.egg
+
+# IDE and text editor files
+*.pyd
+*.pyo
+*.pyc
+*.swp
+*.swo
+
+# Other files
+*.log
+*.bak
+*.tmp
+*.rej
+*.orig
+
+# Visual Studio Code
+.vscode/
+
+# IntelliJ
+.idea/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Spyder
+.spyderproject/
+.spyderproject.cforge/
+
+# Other
+*.sqlite3
+*.db
+*.sqlite
