@@ -1,9 +1,9 @@
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from groq import Groq
 import os
 import requests
 
-load_dotenv()
+# load_dotenv()
 
 client = Groq(
     api_key=str(os.environ.get('GROQ_API_KEY')),
