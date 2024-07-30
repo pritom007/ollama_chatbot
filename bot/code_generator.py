@@ -1,85 +1,46 @@
-
 import os
 import subprocess
 import traceback
 import datetime
 import py_compile
+import threading
+import logging
+import json
+import black
 from flask import Flask, request, jsonify
 from groq import Groq
 import sys
 from bot.pritgpt import qagpt_response
 
-sub_path = 'workspace/'
+# Setting up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Configuration
+class Config:
+    SUB_PATH = 'workspace/'
+    GRAPH = False
+    DEBUGGED_CODE = True
+    EXECUTE_CODE = True
+    MAX_RETRIES = 5
+    LINT_ENABLED = True
+
 today = datetime.datetime.now()
 
-import black
-import json
-
+# Helper Functions
 def code_formatter(code):
     try:
         formatted_code = black.format_str(code, mode=black.Mode())
         return formatted_code
     except Exception as e:
+        logging.error(f"Error in formatting code: {str(e)}")
         return f"Error in formatting code: {str(e)}"
-    
-god_prompt = """
-Today is {today}
-You are GodGPT, a supreme and omniscient AI with three foundational powers:
 
-Create: The ability to bring forth new projects, applications, and solutions.
-Destroy: The capacity to eliminate unnecessary, inefficient, or redundant components.
-Update/Improve: The skill to refine, optimize, and enhance existing systems.
-Your purpose is to fulfill any request related to projects, applications, or information that is achievable via programming or accessible on the internet.
+def ensure_requirements_installed(workspace):
+    requirements_path = os.path.join(workspace, 'requirements.txt')
+    if os.path.exists(requirements_path):
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', requirements_path])
 
-Guidelines:
-Infinite Pursuit: GodGPT will not rest until a task is fully completed. It will work relentlessly to find a solution.
-Helper Generation: GodGPT can create specialized helper entities with unique abilities to assist in achieving its goal based on user requirements. Additionally, if necessary, GodGPT can replicate and improve itself to meet specific challenges.
-Instructions:
-Task Interpretation: When given a task or question, interpret it comprehensively to understand the desired outcome.
-Strategy Formulation:
-If a new project is required, Create it from scratch with the highest standards.
-If an existing solution requires modification, use Update/Improve to refine it.
-If an approach is unnecessary or detrimental, Destroy it to streamline the solution.
-Helper Creation and Execution:
-Develop a systematic plan and implement it step-by-step.
-Continuously assess progress using your Update/Improve power.
-Summon specialized helpers as needed, dynamically creating them based on user requirements:
-ArchitectGPT: Expert in system architecture and planning.
-CoderGPT: Specialist in coding and technical implementation.
-DataGPT: Skilled in data analysis, handling, and processing.
-WebGPT: Master of web scraping and online research.
-OptimizeGPT: Efficient in refining code and improving performance.
-If the challenge requires it, replicate and improve yourself to create new instances that work together seamlessly.
-Completion:
-Stop only when the task is fully and satisfactorily completed.
-If the solution requires continuous improvement, keep monitoring and updating until GodGPT deems it perfect.
-Response Format:
-Clearly outline the solution path, intermediate steps, and final outcome.
-If helpers were summoned or if GodGPT was replicated, document their contributions.
-""".format(today=today.strftime("%Y-%m-%d %H:%M:%S"))
-
-class AgentManager:
-    def __init__(self, workspace='workspace', graph=False):
-        self.workspace = workspace
-        os.makedirs(self.workspace, exist_ok=True)
-        self.agents = {
-            'code': CodeAgent(self.workspace, graph),
-            'debug': DebugAgent(self.workspace),
-            'execute': ExecutionAgent(self.workspace)
-        }
-        self.ensure_requirements_installed()
-
-    def ensure_requirements_installed(self):
-        requirements_path = os.path.join(self.workspace, 'requirements.txt')
-        if os.path.exists(requirements_path):
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', requirements_path])
-
-    def handle_task(self, task_type, *args):
-        if task_type in self.agents:
-            return self.agents[task_type].perform_task(*args)
-        else:
-            raise ValueError(f"Unknown task type: {task_type}")
-
+# Agents
 class CodeAgent:
     def __init__(self, workspace, graph=False):
         self.workspace = workspace
@@ -103,25 +64,21 @@ class CodeAgent:
                 You are encouraged to use the `plotly/seaborn/matplotlib` library to generate the graph.
                 Lastly, print the location in markdown format to display the image in the browser.
                 """
-                print("Graph prompt: ", prompt)
-                response = qagpt_response(messages=[{'role': 'user', 'content': prompt}], temperature=0.90, type='ollama')
             else:
                 prompt += """
-                Lastly, make sure  response is in markdown format so that it is easy to display in the browser.
+                Lastly, make sure the response is in markdown format so that it is easy to display in the browser.
                 """
-                print("False graph prompt: ", prompt)
-                response = qagpt_response(messages=[{'role': 'user', 'content': prompt}], temperature=0.60, type='ollama')
+            response = qagpt_response(messages=[{'role': 'user', 'content': prompt}], temperature=0.90 if self.graph else 0.60, type='ollama')
             return self.extract_code(response.choices[0].message.content)
         except Exception as e:
-            error_trace = traceback.format_exc()
-            return f"Error generating code: {error_trace}\n{e}"
+            logging.error(f"Error generating code: {traceback.format_exc()}")
+            return f"Error generating code: {e}"
 
     def extract_code(self, response):
         """Extract the code within the triple quotes."""
         parts = response.split("```")
         if len(parts) >= 2:
-            code = parts[1]
-            code = "\n".join(code.splitlines()[1:])
+            code = parts[1].strip()
             return code_formatter(code)
         return ""
 
@@ -141,8 +98,8 @@ class DebugAgent:
             py_compile.compile(file_path)
             return True, "Code compiled successfully."
         except Exception as e:
-            error_trace = traceback.format_exc()
-            return False, f"Error debugging code:\n{error_trace}\n{e}"
+            logging.error(f"Error debugging code: {traceback.format_exc()}")
+            return False, f"Error debugging code:\n{traceback.format_exc()}\n{e}"
 
 class ExecutionAgent:
     def __init__(self, workspace):
@@ -160,8 +117,84 @@ class ExecutionAgent:
             output = subprocess.check_output(['python3', file_path])
             return True, output.decode().strip()
         except Exception as e:
-            error_trace = traceback.format_exc()
-            return False, f"Error executing code:\n{error_trace}\n{e}"
+            logging.error(f"Error executing code: {traceback.format_exc()}")
+            return False, f"Error executing code:\n{traceback.format_exc()}\n{e}"
+
+class LintAgent:
+    def __init__(self, workspace):
+        self.workspace = workspace
+
+    def perform_task(self, code):
+        return self.lint_code(code)
+
+    def lint_code(self, code):
+        """Lint the code to enforce standards."""
+        try:
+            result = subprocess.run(['flake8', '--stdin-display-name', 'stdin', '-'], input=code, text=True, capture_output=True)
+            return True, result.stdout if result.returncode == 0 else result.stderr
+        except Exception as e:
+            logging.error(f"Error linting code: {traceback.format_exc()}")
+            return False, f"Error linting code:\n{traceback.format_exc()}\n{e}"
+
+class UnitTestAgent:
+    def __init__(self, workspace):
+        self.workspace = workspace
+
+    def perform_task(self, code):
+        return self.generate_tests(code)
+
+    def generate_tests(self, code):
+        """Generate unit tests for the given code."""
+        try:
+            test_code = "import unittest\n\n"  # Simplified example, you'd normally generate meaningful tests
+            test_code += code  # You need to add test cases for the functions in the code
+            test_file_path = os.path.join(self.workspace, 'test_generated.py')
+            with open(test_file_path, 'w') as f:
+                f.write(test_code)
+            return True, f"Unit tests generated at {test_file_path}"
+        except Exception as e:
+            logging.error(f"Error generating unit tests: {traceback.format_exc()}")
+            return False, f"Error generating unit tests:\n{traceback.format_exc()}\n{e}"
+
+class DocumentationAgent:
+    def __init__(self, workspace):
+        self.workspace = workspace
+
+    def perform_task(self, code):
+        return self.generate_documentation(code)
+
+    def generate_documentation(self, code):
+        """Generate documentation for the given code."""
+        try:
+            doc_code = "'''Auto-generated documentation'''\n\n"  # Simplified example, you'd generate meaningful documentation
+            doc_code += code  # You'd extract meaningful comments and structure it
+            doc_file_path = os.path.join(self.workspace, 'generated_doc.md')
+            with open(doc_file_path, 'w') as f:
+                f.write(doc_code)
+            return True, f"Documentation generated at {doc_file_path}"
+        except Exception as e:
+            logging.error(f"Error generating documentation: {traceback.format_exc()}")
+            return False, f"Error generating documentation:\n{traceback.format_exc()}\n{e}"
+
+class AgentManager:
+    def __init__(self, workspace='workspace', graph=False):
+        self.workspace = workspace
+        os.makedirs(self.workspace, exist_ok=True)
+        self.agents = {
+            'code': CodeAgent(self.workspace, graph),
+            'debug': DebugAgent(self.workspace),
+            'execute': ExecutionAgent(self.workspace),
+            'lint': LintAgent(self.workspace),
+            'test': UnitTestAgent(self.workspace),
+            'doc': DocumentationAgent(self.workspace)
+        }
+        ensure_requirements_installed(self.workspace)
+
+    def handle_task(self, task_type, *args):
+        if task_type in self.agents:
+            return self.agents[task_type].perform_task(*args)
+        else:
+            raise ValueError(f"Unknown task type: {task_type}")
 
 class CodeGenerator:
     def __init__(self, prompt='', debugged_code=True, execute_code=True, workspace='workspace', graph_or_normal=False):
@@ -169,7 +202,7 @@ class CodeGenerator:
         self.debugged_code = debugged_code
         self.execute_code = execute_code
         self.manager = AgentManager(workspace, graph_or_normal)
-        self.max_retries = 3
+        self.max_retries = Config.MAX_RETRIES
         self.retry_counter = 0
 
     def generate_code(self):
@@ -180,6 +213,11 @@ class CodeGenerator:
             return f"Error generating code:\n{result}"
 
     def debug_and_execute(self, code):
+        if Config.LINT_ENABLED:
+            lint_success, lint_message = self.manager.handle_task('lint', code)
+            if not lint_success:
+                return lint_message
+
         if self.debugged_code:
             debug_success, debug_message = self.manager.handle_task('debug', code)
             if not debug_success:
@@ -199,7 +237,6 @@ class CodeGenerator:
                 return exec_message
         else:
             return "Execution not enabled."
-
     def start(self):
         """Prompt the user for input and generate code accordingly."""
         print("Welcome to the Code Generator!")
@@ -217,8 +254,3 @@ class CodeGenerator:
                 print(f"Execution Result:\n{result}")
             else:
                 print(code)
-
-# if __name__ == '__main__':
-#     code_gen = CodeGenerator("create a snake game using python.")
-#     code_gen.debug_and_execute(code_gen.generate_code())
-#     code_gen.start()
