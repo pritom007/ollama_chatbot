@@ -3,9 +3,7 @@ import subprocess
 import traceback
 import datetime
 import py_compile
-import threading
 import logging
-import json
 import black
 from flask import Flask, request, jsonify
 from groq import Groq
@@ -78,10 +76,10 @@ class CodeAgent:
         """Extract the code within the triple quotes."""
         parts = response.split("```")
         if len(parts) >= 2:
-            code = parts[1].strip()
+            code = parts[1]
+            code = "\n".join(code.splitlines()[1:])
             return code_formatter(code)
         return ""
-
 class DebugAgent:
     def __init__(self, workspace):
         self.workspace = workspace
