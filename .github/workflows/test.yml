@@ -1,0 +1,30 @@
+name: AI PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Run AI PR Review
+        uses: pritom007/ai-pr-review@v1.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          ref: ${{ github.ref }}
+          api-key: ${{ secrets.INPUT_API_KEY }}
+          model-name: "llama-3.3-70b-versatile"
+          base-url: "https://api.groq.com/openai/v1"
+          language: "English"
+          temperature: "0.7"
+          max-tokens: "1000"
+
