@@ -50,7 +50,7 @@ def safugpt_response(messages, max_tokens=800, temperature=0.7, top_p=0.95, stop
     }
 
     json_response = requests.post(
-        'https://safuapi.dev.secfdg.net/openai/deployments/gp40614/chat/completions',
+        'https://xyz.dev.xxz.net/openai/deployments/xyz/chat/completions',
         params=params,
         headers=headers,
         json=json_data,
